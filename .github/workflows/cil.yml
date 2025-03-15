@@ -1,0 +1,114 @@
+name: WebUI Module CI
+
+on:
+  push:
+    branches: [ main, master ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        build_type: [debug, release]
+        to_cache_dir: 
+          - C:\Users\runneradmin\scoop
+
+    env:
+      packages_to_install: python zip
+      cache_version: v1.0.0
+      cache_hash_seed_file_path: '.github/workflows/cache_seed_file.txt'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Create cache seed file
+      run: echo ${{ env.packages_to_install }} >> ${{ env.cache_hash_seed_file_path }}
+
+    - name: Restore scoop cache if available
+      id: restore_cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ matrix.to_cache_dir }}
+        key: scoop_cache_${{ env.cache_version }}-${{ hashFiles(env.cache_hash_seed_file_path) }}
+
+    - name: Install scoop
+      if: steps.restore_cache.outputs.cache-hit != 'true'
+      uses: MinoruSekine/setup-scoop@v4
+      with:
+        install_scoop: 'true'
+        buckets: main extras
+        apps: ${{ env.packages_to_install }}
+        scoop_update: 'true'
+        update_path: 'true'
+
+    - name: Setup scoop PATH
+      if: steps.restore_cache.outputs.cache-hit == 'true'
+      uses: MinoruSekine/setup-scoop@v4
+      with:
+        install_scoop: 'false'
+        scoop_update: 'false'
+        update_path: 'true'
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+        cache-dependency-path: 'requirements.txt'
+
+    - name: Create directories
+      run: |
+        mkdir -Force ${{ matrix.build_type }}
+
+    - name: Check tools
+      shell: pwsh
+      run: |
+        python --version
+        zip --version
+        gh --version
+
+    - name: Build package
+      shell: pwsh
+      run: |
+        python zip.py ${{ matrix.build_type }}
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: webui-${{ matrix.build_type }}
+        path: .\${{ matrix.build_type }}\*.zip
+        if-no-files-found: error
+
+  source-archive:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 获取完整历史以便打包
+
+    - name: Create source archive
+      shell: pwsh
+      run: |
+        # 创建源代码目录
+        mkdir -Force source-archive
+        
+        # 使用 Windows 内置的 Compress-Archive 命令打包整个存储库
+        Compress-Archive -Path ./* -DestinationPath ./source-archive/sourcecode.zip -Force
+        
+        # 显示创建的文件
+        Get-ChildItem ./source-archive/
+
+    - name: Upload source archive
+      uses: actions/upload-artifact@v4
+      with:
+        name: webui-source-code
+        path: .\source-archive\sourcecode.zip
+        if-no-files-found: error
