@@ -1,0 +1,7 @@
+id=webui
+name=webui
+version=v0.0.1
+versionCode=1
+author=wentywenty
+description=my helloworld
+updateJson=https://raw.githubusercontent.com/wentywenty/webui/master/update.json

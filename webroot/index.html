@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebUI 示例</title>
+</head>
+<body>
+    <h1>设备信息</h1>
+    <div id="model-info">加载中...</div>
+
+    <script type="module">
+        import { exec } from 'kernelsu';
+
+        async function getDeviceModel() {
+            try {
+                const { errno, stdout } = await exec("getprop ro.product.model");
+                document.getElementById('model-info').textContent = `设备型号: ${stdout.trim()}`;
+            } catch (error) {
+                document.getElementById('model-info').textContent = `错误: ${error.message}`;
+            }
+        }
+
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', getDeviceModel);
+    </script>
+</body>
+</html>
