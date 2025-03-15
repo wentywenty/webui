@@ -94,12 +94,23 @@ jobs:
 
     - name: Extract zip files to folders
       shell: pwsh
+      id: extract_files
       run: |
         # 创建提取目录
         mkdir -Force "artifacts-${{ matrix.build_type }}"
         
         # 查找构建的 ZIP 文件
         $zipFiles = Get-ChildItem -Path ".\${{ matrix.build_type }}\*.zip"
+        
+        # 保存文件名到后续步骤使用
+        if ($zipFiles.Count -gt 0) {
+            $firstZipName = [System.IO.Path]::GetFileNameWithoutExtension($zipFiles[0].Name)
+            echo "ARTIFACT_NAME=$firstZipName" | Out-File -FilePath $env:GITHUB_ENV -Append
+        } else {
+            echo "ARTIFACT_NAME=webui-${{ matrix.build_type }}" | Out-File -FilePath $env:GITHUB_ENV -Append
+            Write-Error "No ZIP files found in ${{ matrix.build_type }} directory!"
+            exit 1
+        }
         
         foreach ($zipFile in $zipFiles) {
             # 获取不带扩展名的文件名
@@ -111,9 +122,6 @@ jobs:
             # 解压文件
             Write-Host "正在解压 $($zipFile.Name) 到 $extractDir"
             Expand-Archive -Path $zipFile.FullName -DestinationPath $extractDir -Force
-            
-            # 复制原始 ZIP 文件到提取目录
-            Copy-Item -Path $zipFile.FullName -Destination ".\artifacts-${{ matrix.build_type }}"
         }
         
         # 列出文件结构
@@ -123,8 +131,8 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: webui-${{ matrix.build_type }}
-        path: .\artifacts-${{ matrix.build_type }}\**
+        name: ${{ env.ARTIFACT_NAME }}
+        path: .\artifacts-${{ matrix.build_type }}\${{ env.ARTIFACT_NAME }}\webui\**
         if-no-files-found: error
 
   source-archive:
