@@ -73,17 +73,31 @@ jobs:
         zip --version
         gh --version
 
-    - name: Build package
-      shell: pwsh
-      run: |
-        python zip.py ${{ matrix.build_type }}
+    # - name: Build package
+    #   shell: pwsh
+    #   env:
+    #     PYTHONIOENCODING: utf-8
+    #     PYTHONUTF8: 1
+    #   run: |
+    #     # 启用 UTF-8 模式
+    #     $env:PYTHONIOENCODING = "utf-8"
+    #     $env:PYTHONUTF8 = 1
+        
+    #     # 运行 zip.py，捕获可能的错误
+    #     try {
+    #         python -c "import sys; print(sys.getdefaultencoding())"
+    #         python zip.py ${{ matrix.build_type }}
+    #     } catch {
+    #         Write-Host "Error: $_"
+    #         exit 1
+    #     }
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: webui-${{ matrix.build_type }}
-        path: .\${{ matrix.build_type }}\*.zip
-        if-no-files-found: error
+    # - name: Upload artifacts
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: webui-${{ matrix.build_type }}
+    #     path: .\${{ matrix.build_type }}\*.zip
+    #     if-no-files-found: error
 
   source-archive:
     runs-on: windows-latest
@@ -97,18 +111,21 @@ jobs:
     - name: Create source archive
       shell: pwsh
       run: |
-        # 创建源代码目录
-        mkdir -Force source-archive
+        # 创建目标目录
+        mkdir -Force temp-output
         
-        # 使用 Windows 内置的 Compress-Archive 命令打包整个存储库
-        Compress-Archive -Path ./* -DestinationPath ./source-archive/sourcecode.zip -Force
+        # 创建文件列表，排除输出目录和二进制文件
+        $filesToInclude = Get-ChildItem -Path ./* -Exclude temp-output,.git,.github,*.zip -Recurse
+        
+        # 使用 Windows 内置的 Compress-Archive 命令打包文件
+        Compress-Archive -Path $filesToInclude -DestinationPath ./temp-output/sourcecode.zip -Force
         
         # 显示创建的文件
-        Get-ChildItem ./source-archive/
+        Get-ChildItem ./temp-output/
 
     - name: Upload source archive
       uses: actions/upload-artifact@v4
       with:
         name: webui-source-code
-        path: .\source-archive\sourcecode.zip
+        path: .\temp-output\sourcecode.zip
         if-no-files-found: error
