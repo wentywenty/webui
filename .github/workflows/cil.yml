@@ -96,7 +96,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: webui-${{ matrix.build_type }}
-        path: .\${{ matrix.build_type }}\*.zip
+        path: .\${{ matrix.build_type }}\**
         if-no-files-found: error
 
   source-archive:
@@ -108,24 +108,32 @@ jobs:
       with:
         fetch-depth: 0  # 获取完整历史以便打包
 
-    - name: Create source archive
+    - name: Create source directory
       shell: pwsh
       run: |
         # 创建目标目录
         mkdir -Force temp-output
         
-        # 创建文件列表，排除输出目录和二进制文件
-        $filesToInclude = Get-ChildItem -Path ./* -Exclude temp-output,.git,.github,*.zip -Recurse
+        # 复制所有源代码文件（不压缩）
+        # 排除不需要的目录和文件
+        $sourceDirs = Get-ChildItem -Path ./* -Exclude temp-output,.git,.github,debug,release,*.zip
         
-        # 使用 Windows 内置的 Compress-Archive 命令打包文件
-        Compress-Archive -Path $filesToInclude -DestinationPath ./temp-output/sourcecode.zip -Force
+        foreach ($item in $sourceDirs) {
+            if (Test-Path $item -PathType Container) {
+                # 如果是目录，则复制整个目录
+                Copy-Item -Path $item -Destination "./temp-output/$($item.Name)" -Recurse
+            } else {
+                # 如果是文件，则直接复制
+                Copy-Item -Path $item -Destination "./temp-output/"
+            }
+        }
         
-        # 显示创建的文件
-        Get-ChildItem ./temp-output/
+        # 显示创建的文件结构
+        Get-ChildItem ./temp-output/ -Recurse | Select-Object FullName
 
-    - name: Upload source archive
+    - name: Upload source files
       uses: actions/upload-artifact@v4
       with:
         name: webui-source-code
-        path: .\temp-output\sourcecode.zip
+        path: .\temp-output\**
         if-no-files-found: error
