@@ -19,7 +19,7 @@ jobs:
           - C:\Users\runneradmin\scoop
 
     env:
-      packages_to_install: python zip
+      packages_to_install: python zip unzip
       cache_version: v1.0.0
       cache_hash_seed_file_path: '.github/workflows/cache_seed_file.txt'
 

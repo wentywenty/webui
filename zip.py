@@ -70,6 +70,9 @@ def create_module_zip(module_info, build_type='debug'):
     
     # 复制 module.prop
     shutil.copy('module.prop', os.path.join(module_dir, 'module.prop'))
+    shutil.copy('customize.sh', os.path.join(module_dir, 'customize.sh'))
+    shutil.copy('service.sh', os.path.join(module_dir, 'service.sh'))
+    shutil.copy('update.json', os.path.join(module_dir, 'update.json'))
     
     # 复制 README.md (如果存在)
     if os.path.exists('README.md'):
