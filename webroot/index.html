@@ -4,20 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebUI 示例</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+    </style>
 </head>
 <body>
     <h1>设备信息</h1>
     <div id="model-info">加载中...</div>
 
-    <script type="module">
-        import { exec } from 'kernelsu';
-
+    <script>
         async function getDeviceModel() {
             try {
-                const { errno, stdout } = await exec("getprop ro.product.model");
-                document.getElementById('model-info').textContent = `设备型号: ${stdout.trim()}`;
+                // 使用全局 KernelSU 对象，无需导入
+                const result = await window.KernelSU.exec("getprop ro.product.model");
+                document.getElementById('model-info').textContent = `设备型号: ${result.stdout.trim()}`;
             } catch (error) {
                 document.getElementById('model-info').textContent = `错误: ${error.message}`;
+                console.error("获取设备信息出错:", error);
             }
         }
 
