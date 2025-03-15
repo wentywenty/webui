@@ -96,7 +96,8 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: webui-${{ matrix.build_type }}
-        path: .\${{ matrix.build_type }}\**
+        path: .\${{ matrix.build_type }}\*.zip
+        compression-level: 0
         if-no-files-found: error
 
   source-archive:
