@@ -92,12 +92,39 @@ jobs:
             exit 1
         }
 
+    - name: Extract zip files to folders
+      shell: pwsh
+      run: |
+        # 创建提取目录
+        mkdir -Force "artifacts-${{ matrix.build_type }}"
+        
+        # 查找构建的 ZIP 文件
+        $zipFiles = Get-ChildItem -Path ".\${{ matrix.build_type }}\*.zip"
+        
+        foreach ($zipFile in $zipFiles) {
+            # 获取不带扩展名的文件名
+            $baseName = [System.IO.Path]::GetFileNameWithoutExtension($zipFile.Name)
+            # 创建目标文件夹
+            $extractDir = ".\artifacts-${{ matrix.build_type }}\$baseName"
+            mkdir -Force $extractDir
+            
+            # 解压文件
+            Write-Host "正在解压 $($zipFile.Name) 到 $extractDir"
+            Expand-Archive -Path $zipFile.FullName -DestinationPath $extractDir -Force
+            
+            # 复制原始 ZIP 文件到提取目录
+            Copy-Item -Path $zipFile.FullName -Destination ".\artifacts-${{ matrix.build_type }}"
+        }
+        
+        # 列出文件结构
+        Write-Host "提取后的文件结构:"
+        Get-ChildItem -Recurse ".\artifacts-${{ matrix.build_type }}" | Select-Object FullName
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: webui-${{ matrix.build_type }}
-        path: .\${{ matrix.build_type }}\*.zip
-        compression-level: 0
+        path: .\${{ matrix.build_type }}\**
         if-no-files-found: error
 
   source-archive:
