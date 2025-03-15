@@ -55,12 +55,12 @@ jobs:
         scoop_update: 'false'
         update_path: 'true'
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-        cache: 'pip'
-        cache-dependency-path: 'requirements.txt'
+    # - name: Set up Python
+    #   uses: actions/setup-python@v5
+    #   with:
+    #     python-version: '3.11'
+    #     cache: 'pip'
+    #     cache-dependency-path: 'requirements.txt'
 
     - name: Create directories
       run: |
@@ -73,31 +73,31 @@ jobs:
         zip --version
         gh --version
 
-    # - name: Build package
-    #   shell: pwsh
-    #   env:
-    #     PYTHONIOENCODING: utf-8
-    #     PYTHONUTF8: 1
-    #   run: |
-    #     # 启用 UTF-8 模式
-    #     $env:PYTHONIOENCODING = "utf-8"
-    #     $env:PYTHONUTF8 = 1
+    - name: Build package
+      shell: pwsh
+      env:
+        PYTHONIOENCODING: utf-8
+        PYTHONUTF8: 1
+      run: |
+        # 启用 UTF-8 模式
+        $env:PYTHONIOENCODING = "utf-8"
+        $env:PYTHONUTF8 = 1
         
-    #     # 运行 zip.py，捕获可能的错误
-    #     try {
-    #         python -c "import sys; print(sys.getdefaultencoding())"
-    #         python zip.py ${{ matrix.build_type }}
-    #     } catch {
-    #         Write-Host "Error: $_"
-    #         exit 1
-    #     }
+        # 运行 zip.py，捕获可能的错误
+        try {
+            python -c "import sys; print(sys.getdefaultencoding())"
+            python zip.py ${{ matrix.build_type }}
+        } catch {
+            Write-Host "Error: $_"
+            exit 1
+        }
 
-    # - name: Upload artifacts
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: webui-${{ matrix.build_type }}
-    #     path: .\${{ matrix.build_type }}\*.zip
-    #     if-no-files-found: error
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: webui-${{ matrix.build_type }}
+        path: .\${{ matrix.build_type }}\*.zip
+        if-no-files-found: error
 
   source-archive:
     runs-on: windows-latest
